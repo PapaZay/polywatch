@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Polymarket Signal Detector API")
+app = FastAPI(title="Polywatch API, A Polymarket Signal Detector")
 
 app.add_middleware(CORSMiddleware,
                    allow_origins=["http://localhost:5173"],

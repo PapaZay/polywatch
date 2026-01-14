@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   postgres:
     image: timescale/timescaledb:latest-pg16
-    container_name: polymarket_db
+    container_name: polywatch_db
     environment:
       POSTGRES_DB: polymarket
       POSTGRES_USER: polymarket_user
