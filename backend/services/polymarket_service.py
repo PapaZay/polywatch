@@ -1,15 +1,13 @@
-from sqlite3.dbapi2 import paramstyle
-
 import httpx
-#from backend.config import settings
+from config import settings
 
 
 class PolyMarketClient:
-    gamma_api = "https://gamma-api.polymarket.com"
-    clob_api = "https://clob.polymarket.com"
+    #gamma_api = "https://gamma-api.polymarket.com"
+    #clob_api = "https://clob.polymarket.com"
     def __init__(self):
-        #self.gamma_api = settings.POLYMARKET_GAMMA_API_URL
-        #self.clob_api = settings.POLYMARKET_GAMMA_API_URL
+        self.gamma_api = settings.POLYMARKET_GAMMA_API_URL
+        self.clob_api = settings.POLYMARKET_CLOB_API_URL
         self.client = httpx.Client(timeout=30)
 
     def get_markets(self, limit: int = 100, offset: int = 0, closed: bool = False) -> list:
@@ -36,8 +34,12 @@ class PolyMarketClient:
 
 if __name__ == "__main__":
     client = PolyMarketClient()
-    markets = client.get_markets(limit=5)
-    print(f"Fetched {len(markets)} markets")
-    for m in markets:
-        print(f" - {m.get('question', 'No title')}")
-    client.close()
+    try:
+        events = client.get_events(limit=5)
+        print(f"Fetched {len(events)} events")
+        for e in events:
+            print(f" - {e.get('title', 'No title')}")
+    except Exception as e:
+        print(f"Error {e}")
+    finally:
+        client.close()
