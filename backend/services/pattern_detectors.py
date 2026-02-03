@@ -7,7 +7,6 @@ from models.market import Market, MarketSnapshot, Signal
 def detect_volume_spikes(db, sigma_threshold: float = 2.0):
     signals = []
     week_ago = datetime.now(timezone.utc) - timedelta(days=7) # about a week ago, week ago!
-
     markets = db.query(Market).filter(Market.status == "open").all()
 
     for market in markets:
@@ -54,3 +53,47 @@ def detect_volume_spikes(db, sigma_threshold: float = 2.0):
             })
     return signals
 
+def detect_price_momentum(db, threshold: float = 0.10):
+    signals = []
+    six_hours_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    markets = db.query(Market).filter(Market.status == "open").all()
+
+    for market in markets:
+        latest = db.query(MarketSnapshot).filter(
+            MarketSnapshot.market_id == market.id
+        ).order_by(MarketSnapshot.ts.desc()).first()
+
+        earlier = db.query(MarketSnapshot).filter(
+            MarketSnapshot.market_id == market.id,
+            MarketSnapshot.ts <= six_hours_ago,
+        ).order_by(MarketSnapshot.ts.desc()).first()
+
+        if not latest or not earlier or not latest.price or not earlier.price:
+            continue
+
+        current_price = float(latest.price)
+        earlier_price = float(earlier.price)
+
+        if earlier_price == 0:
+            continue
+
+        diff = abs(current_price - earlier_price)
+
+        if diff > threshold:
+            direction = "up" if current_price > earlier_price else "down"
+            confidence = min(diff / 0.3, 1.0)
+
+            signals.append({
+                "market_id": market.id,
+                "title": market.title,
+                "signal_type": "price_momentum",
+                "confidence": round(confidence, 2),
+                "details": {
+                    "current_price": current_price,
+                    "earlier_price": earlier_price,
+                    "change": round(diff, 4),
+                    "direction": direction,
+                }
+            })
+
+    return signals
