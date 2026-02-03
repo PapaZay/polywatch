@@ -1,10 +1,9 @@
-import json
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import func
 from database import SessionLocal
 from models.market import Market, MarketSnapshot, Signal
 
-def detect_volume_spikes(db, sigma_threshold: float = 2.0):
+def detect_volume_spikes(db, sigma_threshold: float = 3.0):
     signals = []
     week_ago = datetime.now(timezone.utc) - timedelta(days=7) # about a week ago, week ago!
     markets = db.query(Market).filter(Market.status == "open").all()
@@ -35,6 +34,10 @@ def detect_volume_spikes(db, sigma_threshold: float = 2.0):
             continue
 
         current_vol = float(latest.volume)
+
+        if current_vol < 100000:
+            continue
+
         z_score = (current_vol - avg_vol) / std_vol
 
         if z_score > sigma_threshold:
@@ -53,9 +56,9 @@ def detect_volume_spikes(db, sigma_threshold: float = 2.0):
             })
     return signals
 
-def detect_price_momentum(db, threshold: float = 0.10):
+def detect_price_momentum(db, threshold: float = 0.15):
     signals = []
-    six_hours_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    six_hours_ago = datetime.now(timezone.utc) - timedelta(hours=6)
     markets = db.query(Market).filter(Market.status == "open").all()
 
     for market in markets:
@@ -97,3 +100,48 @@ def detect_price_momentum(db, threshold: float = 0.10):
             })
 
     return signals
+
+def save_signals(db, signals):
+    count = 0
+    for s in signals:
+        signal = Signal(
+            market_id=s["market_id"],
+            signal_type=s["signal_type"],
+            confidence=s["confidence"],
+            signal_metadata=s["details"],
+        )
+        db.add(signal)
+        count += 1
+    db.commit()
+    return count
+
+def run_detections():
+    db = SessionLocal()
+    try:
+        print("Running pattern detectors...")
+
+        volume_signals = detect_volume_spikes(db)
+        print(f"Volume spikes: {len(volume_signals)}")
+
+        momentum_signals = detect_price_momentum(db)
+        print(f"Price momentum: {len(momentum_signals)}")
+
+        all_signals = volume_signals + momentum_signals
+
+        if all_signals:
+            saved = save_signals(db, all_signals)
+            print(f"Saved {saved} signals to database")
+
+            for s in all_signals:
+                print(f"[{s['signal_type']} {s['title'][:50]}]"
+                      f"(confidence: {s['confidence']})")
+        else:
+            print("No signals detected")
+    except Exception as e:
+        db.rollback()
+        print(f"Error in pattern detection: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    run_detections()

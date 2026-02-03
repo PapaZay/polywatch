@@ -52,7 +52,7 @@ def run_collector(interval_minutes: int = 5):
     print(f"Collecting snapshots (every {interval_minutes} mins)")
     while True:
         collect_snapshots()
-        # time.sleep(interval_minutes * 60)
+        time.sleep(interval_minutes * 60)
 
 if __name__ == "__main__":
     run_collector(interval_minutes=5)
