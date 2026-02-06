@@ -102,18 +102,41 @@ def detect_price_momentum(db, threshold: float = 0.15):
     return signals
 
 def save_signals(db, signals):
-    count = 0
+    now = datetime.now(timezone.utc)
+    new_count = 0
+    updated_count = 0
     for s in signals:
-        signal = Signal(
-            market_id=s["market_id"],
-            signal_type=s["signal_type"],
-            confidence=s["confidence"],
-            signal_metadata=s["details"],
-        )
-        db.add(signal)
-        count += 1
+        existing = db.query(Signal).filter(
+            Signal.market_id == s["market_id"],
+            Signal.signal_type == s["signal_type"],
+            Signal.status == "active",
+        ).first()
+        if existing:
+            existing.last_seen = now
+            existing.confidence = s["confidence"]
+            existing.signal_metadata = s["details"]
+            updated_count += 1
+        else:
+
+            signal = Signal(
+                market_id=s["market_id"],
+                signal_type=s["signal_type"],
+                confidence=s["confidence"],
+                signal_metadata=s["details"],
+                status="active",
+            )
+            db.add(signal)
+            new_count += 1
     db.commit()
-    return count
+    print(f"New signals: {new_count}, Updated signals: {updated_count}")
+    return new_count
+
+def resolve_old_signals(db, active_market_ids, signal_type):
+    db.query(Signal).filter(
+        Signal.signal_type == signal_type,
+        Signal.status == "active",
+        ~Signal.market_id.in_(active_market_ids),
+        ).update({"status": "resolved"}, synchronize_session=False)
 
 def run_detections():
     db = SessionLocal()
@@ -123,8 +146,14 @@ def run_detections():
         volume_signals = detect_volume_spikes(db)
         print(f"Volume spikes: {len(volume_signals)}")
 
+        active_volume_markets = [s["market_id"] for s in volume_signals]
+        resolve_old_signals(db, active_volume_markets, "volume_spike")
+
         momentum_signals = detect_price_momentum(db)
         print(f"Price momentum: {len(momentum_signals)}")
+
+        active_momentum_markets = [s["market_id"] for s in momentum_signals]
+        resolve_old_signals(db, active_momentum_markets, "price_momentum")
 
         all_signals = volume_signals + momentum_signals
 

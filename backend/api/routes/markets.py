@@ -16,7 +16,7 @@ def get_markets(limit: int = 20):
             markets.append({
                 "id": market.get("id"),
                 "question": market.get("question"),
-                "category": category.title(),
+                "category": category.title() if category else None,
                 "volume": market.get("volume"),
                 "outcomePrices": market.get("outcomePrices"),
             })

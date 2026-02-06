@@ -49,7 +49,9 @@ def upgrade() -> None:
     sa.Column('market_id', sa.String(), nullable=False),
     sa.Column('signal_type', sa.String(), nullable=False),
     sa.Column('detected_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.Column('confidence', sa.Numeric(precision=3, scale=2), nullable=True),
+    sa.Column('last_seen', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('status', sa.String(), server_default='active', nullable=True),
+    sa.Column('confidence', sa.Numeric(precision=4, scale=2), nullable=True),
     sa.Column('signal_metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.ForeignKeyConstraint(['market_id'], ['markets.id'], ),
     sa.PrimaryKeyConstraint('id')
