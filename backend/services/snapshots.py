@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from database import SessionLocal
 from models.market import Market, MarketSnapshot
 from services.polymarket_service import PolyMarketClient
-
+from services.pattern_detectors import run_detections
 import json
 def collect_snapshots():
     client = PolyMarketClient()
@@ -41,6 +41,8 @@ def collect_snapshots():
 
         db.commit()
         print(f"[{now.isoformat()}] Saved {count} snapshots")
+
+        run_detections()
     except Exception as e:
         db.rollback()
         print(f"Error collecting snapshots: {e}")

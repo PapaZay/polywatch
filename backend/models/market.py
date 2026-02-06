@@ -34,7 +34,7 @@ class Signal(Base):
     market_id = Column(String, ForeignKey("markets.id"), nullable=False)
     signal_type = Column(String, nullable=False)
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
-    confidence = Column(Numeric(3, 2))
+    confidence = Column(Numeric(4, 2))
     signal_metadata = Column(JSONB)
 
 # class TraderPerformance(Base):
