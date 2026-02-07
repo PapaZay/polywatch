@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from services.pattern_detectors import detect_volume_spikes, detect_price_momentum
 
 class MockMarket:
@@ -70,6 +70,19 @@ class TestVolumeSpikes:
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = snapshots
 
         assert detect_volume_spikes(db) == []
+
+    def test_no_spike_when_variance_too_low(self, db, market, now):
+        snapshots = []
+        volume = 100000
+        for i in range(15):
+            snapshots.append(MockSnapshot(now - timedelta(hours=15-i), "m1", volume))
+            volume += 5
+
+        db.query.return_value.filter.return_value.all.return_value = [market]
+        db.query.return_value.filter.return_value.order_by.return_value.all.return_value = snapshots
+
+        assert detect_volume_spikes(db) == []
+
 
 class TestPriceMomentum:
     def test_no_snapshots_returns_empty(self, db, market):

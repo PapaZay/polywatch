@@ -30,13 +30,10 @@ def detect_volume_spikes(db, sigma_threshold: float = 3.0):
         avg_delta = sum(deltas) / len(deltas)
         std_delta = (sum((d - avg_delta) ** 2 for d in deltas) / len(deltas)) ** 0.5
 
-        if std_delta == 0:
+        if std_delta < 10:
             continue
 
         latest_delta = float(snapshots[-1].volume) - float(snapshots[-2].volume)
-
-        if latest_delta < 1000:
-            continue
 
         z_score = (latest_delta - avg_delta) / std_delta
 
