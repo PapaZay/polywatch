@@ -5,6 +5,7 @@ from database import SessionLocal
 from models.market import Market, MarketSnapshot
 from services.polymarket_service import PolyMarketClient
 from services.pattern_detectors import run_detections
+from services.market_sync import sync_markets
 import json
 def collect_snapshots():
     client = PolyMarketClient()
@@ -51,9 +52,18 @@ def collect_snapshots():
         db.close()
 
 def run_collector(interval_minutes: int = 5):
+    sync_interval = 12 * 60
+    cycles_to_sync = 0
+
     print(f"Collecting snapshots (every {interval_minutes} mins)")
     while True:
+        if cycles_to_sync <= 0:
+            print("Syncing markets...")
+            sync_markets()
+            cycles_to_sync = sync_interval // interval_minutes
+
         collect_snapshots()
+        cycles_to_sync -= 1
         time.sleep(interval_minutes * 60)
 
 if __name__ == "__main__":

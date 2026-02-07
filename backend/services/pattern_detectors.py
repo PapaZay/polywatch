@@ -9,36 +9,36 @@ def detect_volume_spikes(db, sigma_threshold: float = 3.0):
     markets = db.query(Market).filter(Market.status == "open").all()
 
     for market in markets:
-        stats = db.query(
-            func.avg(MarketSnapshot.volume).label("avg_vol"),
-            func.stddev(MarketSnapshot.volume).label("std_vol"),
-        ).filter(
+        snapshots = db.query(MarketSnapshot).filter(
             MarketSnapshot.market_id == market.id,
             MarketSnapshot.ts >= week_ago,
-        ).first()
+        ).order_by(MarketSnapshot.ts.asc()).all()
 
-        if not stats or not stats.avg_vol or not stats.std_vol:
+        if len(snapshots) < 10:
             continue
 
-        avg_vol = float(stats.avg_vol)
-        std_vol = float(stats.std_vol)
+        deltas = []
+        for i in range(1, len(snapshots)):
+            delta = float(snapshots[i].volume) - float(snapshots[i-1].volume)
+            if delta > 0:
+                deltas.append(delta)
 
-        if std_vol == 0:
+        if len(deltas) < 5:
             continue
 
-        latest = (db.query(MarketSnapshot).filter(
-            MarketSnapshot.market_id == market.id
-        ).order_by(MarketSnapshot.ts.desc()).first())
 
-        if not latest:
+        avg_delta = sum(deltas) / len(deltas)
+        std_delta = (sum((d - avg_delta) ** 2 for d in deltas) / len(deltas)) ** 0.5
+
+        if std_delta == 0:
             continue
 
-        current_vol = float(latest.volume)
+        latest_delta = float(snapshots[-1].volume) - float(snapshots[-2].volume)
 
-        if current_vol < 100000:
+        if latest_delta < 1000:
             continue
 
-        z_score = (current_vol - avg_vol) / std_vol
+        z_score = (latest_delta - avg_delta) / std_delta
 
         if z_score > sigma_threshold:
             confidence = min(z_score / 5.0, 1.0)
@@ -48,9 +48,9 @@ def detect_volume_spikes(db, sigma_threshold: float = 3.0):
                 "signal_type": "volume_spike",
                 "confidence": round(confidence, 2),
                 "details": {
-                    "current_volume": current_vol,
-                    "avg_volume": round(avg_vol, 2),
-                    "std_dev": round(std_vol, 2),
+                    "current_volume": latest_delta,
+                    "avg_volume": round(avg_delta, 2),
+                    "std_dev": round(std_delta, 2),
                     "z_score": round(z_score, 2),
                 }
             })
