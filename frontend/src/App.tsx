@@ -1,35 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Layout from "./components/Layout";
+import SignalCard from "./components/SignalCard";
+import type {Signal} from "./types";
+
+const mockSignal: Signal = {
+    id: "1",
+    market_id: "Will Bitcoin hit $1m before GTA VI?",
+    signal_type: "volume_spike",
+    confidence: 0.85,
+    detected_at: new Date().toISOString(),
+    metadata: {
+        current_volume: 50000,
+        avg_volume: 3000,
+        std_dev: 1200,
+        z_score: 4.25,
+    },
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <Layout>
+            <h2 className="text-lg font-semibold mb-4">Active Signals</h2>
+            <SignalCard signal={mockSignal}/>
+        </Layout>
+    )
 }
 
-export default App
+export default App;

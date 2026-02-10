@@ -5,7 +5,7 @@ export interface VolumeSpikeMeta {
     z_score: number;
 }
 
-export default interface PriceMomentumMeta {
+export interface PriceMomentumMeta {
     current_price: number;
     earlier_price: number;
     change: number;
