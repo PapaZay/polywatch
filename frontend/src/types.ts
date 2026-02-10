@@ -17,6 +17,7 @@ export type SignalMetadata = VolumeSpikeMeta | PriceMomentumMeta;
 export interface Signal {
     id: string;
     market_id: string;
+    title?: string;
     signal_type: "volume_spike" | "price_momentum";
     confidence: number | null;
     detected_at: string | null;

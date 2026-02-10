@@ -37,7 +37,7 @@ export default function SignalCard({signal}: SignalCardProps) {
             </div>
 
             <p className="text-sm text-gray-300 mb-2 truncate">
-                {signal.market_id}
+                {signal.title ?? signal.market_id}
             </p>
 
             {isVolume && meta && (
