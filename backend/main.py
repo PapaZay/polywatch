@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes.markets import router as market_router
 from api.routes.signals import router as signal_router
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from database import get_db
 
 app = FastAPI(title="Polywatch API, A Polymarket Signal Detector")
 
@@ -21,5 +24,9 @@ def get_root():
 
 
 @app.get("/health")
-def health():
-    return {"database": "not connected yet"}
+def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"database": "connected"}
+    except Exception:
+        return {"database": "disconnected"}

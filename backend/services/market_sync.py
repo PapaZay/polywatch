@@ -23,12 +23,16 @@ def sync_markets():
                     existing.outcomes = market_data.get("outcomes")
                     existing.category = category
                     existing.title = market_data.get("question", "")
+                    existing.volume = market_data.get("volume")
+                    existing.outcome_prices = market_data.get("outcomePrices")
                 else:
                     market = Market(
                         id=market_id,
                         title=market_data.get("question", ""),
                         category=category,
                         status="closed" if market_data.get("closed") else "open",
+                        volume=market_data.get("volume"),
+                        outcome_prices=market_data.get("outcomePrices"),
                         outcomes=market_data.get("outcomes")
                     )
                     db.add(market)

@@ -12,6 +12,8 @@ class Market(Base):
     title = Column(Text, nullable=False)
     category = Column(String, index=True)
     status = Column(String, index=True)
+    volume = Column(Numeric(18, 2))
+    outcome_prices = Column(JSONB)
     outcomes = Column(JSONB)
     resolution_result = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

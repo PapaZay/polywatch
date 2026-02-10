@@ -1,23 +1,21 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database import get_db
+from models.market import Market
 
-from services.polymarket_service import PolyMarketClient
 
 router = APIRouter()
-client = PolyMarketClient()
 
 @router.get("/markets")
-def get_markets(limit: int = 20):
-    events = client.get_events(limit=limit)
+def get_markets(limit: int = 20, db: Session = Depends(get_db)):
+    events = db.query(Market).filter(Market.status == "open").order_by(Market.updated_at.desc()).limit(limit).all()
     markets = []
-    for event in events:
-        tags = event.get("tags", [])
-        category = tags[0]["label"] if tags else None
-        for market in event.get("markets", []):
-            markets.append({
-                "id": market.get("id"),
-                "question": market.get("question"),
-                "category": category.title() if category else None,
-                "volume": market.get("volume"),
-                "outcomePrices": market.get("outcomePrices"),
-            })
+    for market in events:
+        markets.append({
+            "id": market.id,
+            "question": market.title,
+            "category": market.category,
+            "volume": str(market.volume) if market.volume else "0",
+            "outcomePrices": market.outcome_prices,
+        })
     return markets
