@@ -1,6 +1,6 @@
 import type {Signal, Market} from "../types";
 
-const BASE_API_URL = "/api"
+const BASE_API_URL = import.meta.env.VITE_API_URL || "/api"
 
 export async function fetchActiveSignals (
     limit: number = 20,

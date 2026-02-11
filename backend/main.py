@@ -4,12 +4,13 @@ from api.routes.markets import router as market_router
 from api.routes.signals import router as signal_router
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from config import settings
 from database import get_db
 
 app = FastAPI(title="Polywatch API, A Polymarket Signal Detector")
 
 app.add_middleware(CORSMiddleware,
-                   allow_origins=["http://localhost:5173"],
+                   allow_origins=settings.CORS_ORIGINS.split(","),
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"]
