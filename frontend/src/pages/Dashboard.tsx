@@ -8,7 +8,7 @@ type SignalFilter = "all" | "volume_spike" | "price_momentum";
 
 export default function Dashboard(){
     const [filter, setFilter] = useState<SignalFilter>("all");
-    const signals = useActiveSignals(20);
+    const signals = useActiveSignals(20, filter === "all" ? undefined: filter);
     const markets = useMarkets(20);
 
     const filters: {value: SignalFilter; label: string}[] = [
