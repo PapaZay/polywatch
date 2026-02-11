@@ -2,18 +2,23 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy import func
 from database import SessionLocal
 from models.market import Market, MarketSnapshot, Signal
+from itertools import groupby
 
 def detect_volume_spikes(db, sigma_threshold: float = 3.0):
     signals = []
     week_ago = datetime.now(timezone.utc) - timedelta(days=7) # about a week ago, week ago!
-    markets = db.query(Market).filter(Market.status == "open").all()
+    open_markets = db.query(Market).filter(Market.status == "open").all()
+    markets = {}
+    for m in open_markets:
+        markets[m.id] = m
 
-    for market in markets:
-        snapshots = db.query(MarketSnapshot).filter(
-            MarketSnapshot.market_id == market.id,
-            MarketSnapshot.ts >= week_ago,
-        ).order_by(MarketSnapshot.ts.asc()).all()
+    snapshots = db.query(MarketSnapshot).filter(
+        MarketSnapshot.market_id.in_(markets.keys()),
+        MarketSnapshot.ts >= week_ago,
+    ).order_by(MarketSnapshot.market_id, MarketSnapshot.ts.asc()).all()
 
+    for market_id, snaps in groupby(snapshots, key=lambda s: s.market_id):
+        snapshots = list(snaps)
         if len(snapshots) < 10:
             continue
 
@@ -40,8 +45,8 @@ def detect_volume_spikes(db, sigma_threshold: float = 3.0):
         if z_score > sigma_threshold:
             confidence = min(z_score / 5.0, 1.0)
             signals.append({
-                "market_id": market.id,
-                "title": market.title,
+                "market_id": market_id,
+                "title": markets[market_id].title,
                 "signal_type": "volume_spike",
                 "confidence": round(confidence, 2),
                 "details": {
