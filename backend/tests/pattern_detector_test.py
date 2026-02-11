@@ -96,7 +96,7 @@ class TestPriceMomentum:
         earlier = MockSnapshot(now - timedelta(hours=7), "m1", 100000, price=0.50)
 
         db.query.return_value.filter.return_value.all.return_value = [market]
-        db.query.return_value.filter.return_value.order_by.return_value.first.side_effect = [latest, earlier]
+        db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [latest, earlier]
 
         signals = detect_price_momentum(db)
         assert len(signals) == 1
