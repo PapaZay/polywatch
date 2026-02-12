@@ -4,10 +4,11 @@ from unittest.mock import MagicMock
 from services.pattern_detectors import detect_volume_spikes, detect_price_momentum
 
 class MockMarket:
-    def __init__(self, id, title, status="open"):
+    def __init__(self, id, title, status="open", volume="100000"):
         self.id = id
         self.title = title
         self.status = status
+        self.volume = volume
 
 class MockSnapshot:
     def __init__(self, ts, market_id, volume, price=0.5):

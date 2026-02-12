@@ -7,6 +7,7 @@ from services.polymarket_service import PolyMarketClient
 from services.pattern_detectors import run_detections
 from services.market_sync import sync_markets
 import json
+
 def collect_snapshots():
     client = PolyMarketClient()
     db = SessionLocal()
@@ -16,13 +17,21 @@ def collect_snapshots():
         count = 0
         now = datetime.now(timezone.utc)
 
+        known_ids = set()
+        for m in db.query(Market.id).all():
+            known_ids.add(m[0])
+
         for event in events:
             for market_data in event.get("markets", []):
                 market_id = market_data.get("id")
 
-                exists = db.query(Market).filter(Market.id == market_id).first()
-                if not exists:
+                if market_id not in known_ids:
                     continue
+
+                volume = float(market_data.get("volume", 0))
+                if volume < 10000:
+                    continue
+
                 prices_str = market_data.get("outcomePrices", "[]")
                 try:
                     prices = json.loads(prices_str)

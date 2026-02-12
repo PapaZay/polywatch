@@ -1,23 +1,27 @@
 from datetime import datetime, timezone, timedelta
+from itertools import groupby
+
 from database import SessionLocal
 from models.market import Market, MarketSnapshot, Signal
-from itertools import groupby
 
 def detect_volume_spikes(db, sigma_threshold: float = 3.0):
     signals = []
-    week_ago = datetime.now(timezone.utc) - timedelta(days=7) # about a week ago, week ago!
+    five_days_ago = datetime.now(timezone.utc) - timedelta(days=5) # not a week ago, week ago :(
     open_markets = db.query(Market).filter(Market.status == "open").all()
     markets = {}
-    for m in open_markets:
-        markets[m.id] = m
+    for market in open_markets:
+        if not market.volume or float(market.volume) < 10000:
+            continue
+        markets[market.id] = market
 
     all_snapshots = db.query(MarketSnapshot).filter(
         MarketSnapshot.market_id.in_(markets.keys()),
-        MarketSnapshot.ts >= week_ago,
+        MarketSnapshot.ts >= five_days_ago,
     ).order_by(MarketSnapshot.market_id, MarketSnapshot.ts.asc()).all()
 
-    for market_id, snaps in groupby(all_snapshots, key=lambda s: s.market_id):
+    for market_id, snaps in groupby(all_snapshots, key = lambda s: s.market_id):
         snapshots = list(snaps)
+
         if len(snapshots) < 10:
             continue
 
@@ -62,16 +66,27 @@ def detect_price_momentum(db, threshold: float = 0.15):
     six_hours_ago = datetime.now(timezone.utc) - timedelta(hours=6)
     open_markets = db.query(Market).filter(Market.status == "open").all()
     markets = {}
-    for m in open_markets:
-        markets[m.id] = m
+    for market in open_markets:
+        if not market.volume or float(market.volume) < 10000:
+            continue
+        markets[market.id] = market
 
-    snapshots = db.query(MarketSnapshot).filter(
+        # latest = db.query(MarketSnapshot).filter(
+        #     MarketSnapshot.market_id == market.id,
+        # ).order_by(MarketSnapshot.ts.desc()).first()
+        #
+        # earlier = db.query(MarketSnapshot).filter(
+        #     MarketSnapshot.market_id == market.id,
+        #     MarketSnapshot.ts <= six_hours_ago,
+        # ).order_by(MarketSnapshot.ts.desc()).first()
+
+    all_snapshots = db.query(MarketSnapshot).filter(
         MarketSnapshot.market_id.in_(markets.keys()),
     ).order_by(MarketSnapshot.market_id, MarketSnapshot.ts.desc()).all()
-    for market_id, snaps in groupby(snapshots, key= lambda s: s.market_id):
+
+    for market_id, snaps in groupby(all_snapshots, key=lambda s: s.market_id):
         market_snaps = list(snaps)
         latest = market_snaps[0]
-
         earlier = None
         for s in market_snaps:
             if s.ts <= six_hours_ago:
@@ -124,7 +139,6 @@ def save_signals(db, signals):
             existing.signal_metadata = s["details"]
             updated_count += 1
         else:
-
             signal = Signal(
                 market_id=s["market_id"],
                 signal_type=s["signal_type"],
