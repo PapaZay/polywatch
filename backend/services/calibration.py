@@ -39,5 +39,35 @@ def sync_resolved_market():
         client.close()
         db.close()
         
-#def _derive_resolution(market_data: dict) -> str | None:
+def _derive_resolution(market_data: dict) -> str | None:
+    raw_prices = market_data.get("outcomePrices")
+    raw_outcomes = market_data.get("outcomes")
+    
+    if not raw_prices or not raw_outcomes:
+        return None
+
+    try:
+        if isinstance(raw_prices, str):
+            prices = json.loads(raw_prices)
+        else:
+            prices = raw_prices
+        
+        if isinstance(raw_outcomes, str):
+            outcomes = json.loads(raw_outcomes)
+        else:
+            outcomes = raw_outcomes
+            
+        float_prices = [float(p) for p in prices]
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return None
+
+    if len(float_prices) != len(outcomes) or len(float_prices) < 2:
+        return None
+    
+    max_price = max(float_prices)
+    if max_price < 0.9:
+        return None
+    
+    winner_index = float_prices.index(max_price)
+    return outcomes[winner_index]
     
