@@ -70,4 +70,63 @@ def _derive_resolution(market_data: dict) -> str | None:
     
     winner_index = float_prices.index(max_price)
     return outcomes[winner_index]
+
+def compute_calibration(db: Session, category: str | None = None) -> dict:
+    query = db.query(Market).filter(Market.resolution_result.isnot(None))
+    if category:
+        query = query.filter(Market.category == category)
     
+    resolved_markets = query.all()
+    
+    if not resolved_markets:
+        return {
+            "briar_score": None,
+            "market_count": 0,
+            "calibration_curve": [],
+            "category_breakdown": [],
+        }
+        
+    forecasts = []
+    
+    for market in resolved_markets:
+        outcomes = market.outcomes
+        if isinstance(outcomes, str):
+            outcomes = json.loads(outcomes)
+            
+        if not outcomes or len(outcomes) != 2:
+            continue
+        
+        last_snapshots = (db.query(MarketSnapshot).filter(MarketSnapshot.market_id == market.id).order_by(MarketSnapshot.ts.desc()).first())
+        
+        if not last_snapshots or last_snapshots.price is None:
+            continue
+        
+        predicted = float(last_snapshots.price)
+        actual = 1.0 if market.resolution_result == outcomes[0] else 0.0
+        
+        forecasts.append({
+            "predicted": predicted,
+            "actual": actual,
+            "category": market.category,
+        })
+        
+    if not forecasts:
+        return {
+            "brier_score": None,
+            "market_count": 0,
+            "calibration_score": [],
+            "category_breakdown": [],
+        }
+    
+    brier_sum = sum((f["predictdd"] - f["actual"]) ** 2 for f in forecasts)
+    brier_score = brier_sum / len(forecasts)
+    
+    #calibration_curve = _compute_calibration_bins(forecasts)
+    #category_breakdown = _compute_category_breakdown(forecasts)
+    
+    return {
+        "brier_score": round(brier_score, 4),
+        "market_count": len(forecasts),
+        #"calibration_curve": calibration_curve,
+        #"category_breakdown": category_breakdown,
+    }
