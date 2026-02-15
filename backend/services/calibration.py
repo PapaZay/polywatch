@@ -13,14 +13,14 @@ def sync_resolved_market():
         
         for event in events:
             for market_data in event.get("markets", []):
-                market_id = market_data.get("markets", [])
+                market_id = market_data.get("id")
                 if not market_data.get("closed"):
                     continue
                 
                 existing = db.query(Market).filter(Market.id == market_id).first()
                 if not existing:
                     continue
-                if not existing.resolution_result:
+                if existing.resolution_result:
                     continue
                 
                 resolution = _derive_resolution(market_data)
@@ -80,7 +80,7 @@ def compute_calibration(db: Session, category: str | None = None) -> dict:
     
     if not resolved_markets:
         return {
-            "briar_score": None,
+            "brier_score": None,
             "market_count": 0,
             "calibration_curve": [],
             "category_breakdown": [],
@@ -114,11 +114,11 @@ def compute_calibration(db: Session, category: str | None = None) -> dict:
         return {
             "brier_score": None,
             "market_count": 0,
-            "calibration_score": [],
+            "calibration_curve": [],
             "category_breakdown": [],
         }
     
-    brier_sum = sum((f["predictdd"] - f["actual"]) ** 2 for f in forecasts)
+    brier_sum = sum((f["predicted"] - f["actual"]) ** 2 for f in forecasts)
     brier_score = brier_sum / len(forecasts)
     
     #calibration_curve = _compute_calibration_bins(forecasts)
