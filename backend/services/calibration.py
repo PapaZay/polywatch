@@ -121,12 +121,61 @@ def compute_calibration(db: Session, category: str | None = None) -> dict:
     brier_sum = sum((f["predicted"] - f["actual"]) ** 2 for f in forecasts)
     brier_score = brier_sum / len(forecasts)
     
-    #calibration_curve = _compute_calibration_bins(forecasts)
-    #category_breakdown = _compute_category_breakdown(forecasts)
+    calibration_curve = _compute_calibration_bins(forecasts)
+    category_breakdown = _compute_category_breakdown(forecasts)
     
     return {
         "brier_score": round(brier_score, 4),
         "market_count": len(forecasts),
-        #"calibration_curve": calibration_curve,
-        #"category_breakdown": category_breakdown,
+        "calibration_curve": calibration_curve,
+        "category_breakdown": category_breakdown,
     }
+
+def _compute_calibration_bins(forecasts: list[dict], n_bins: int = 10) -> list[dict]:
+    bins = []
+    bin_width = 1.0 / n_bins
+    
+    for i in range(n_bins):
+        bin_start = i * bin_width
+        bin_end = (i + 1) * bin_width
+        
+        in_bin = [
+            f for f in forecasts
+            if bin_start <= f["predicted"] < bin_end
+            or (i == n_bins - 1 and f["predicted"] == 1.0)
+        ]
+        
+        if in_bin:
+            avg_predicted = sum(f["predicted"] for f in in_bin) / len(in_bin)
+            actual_frequency = sum(f["actual"] for f in in_bin) / len(in_bin)
+        else:
+            avg_predicted = (bin_start + bin_end) / 2
+            actual_frequency = None
+        
+        bins.append({
+            "bin_start": round(bin_start, 2),
+            "bin_end": round(bin_end, 2),
+            "avg_predicted": round(avg_predicted, 4),
+            "actual_frequency": round(actual_frequency, 4) if actual_frequency is not None else None,
+            "count": len(in_bin),
+        })
+    return bins
+
+def _compute_category_breakdown(forecasts: list[dict]) -> list[dict]:
+    categories: dict[str, list] = {}
+    for f in forecasts:
+        cat = f["category"] or "Uncategorized"
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(f)
+        
+    breakdown = []
+    for cat, cat_forecasts in sorted(categories.items()):
+        brier = sum((f["predicted"] - f["actual"]) ** 2 for f in cat_forecasts) / len(cat_forecasts)
+        breakdown.append({
+            "category": cat,
+            "brier_score": round(brier, 4),
+            "count": len(cat_forecasts),
+        })
+        
+    return sorted(breakdown, key=lambda x: x["brier_score"])
