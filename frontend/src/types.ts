@@ -1,3 +1,5 @@
+import type { LargeNumberLike } from "crypto";
+
 export interface VolumeSpikeMeta {
     current_volume: number;
     avg_volume: number;
@@ -30,4 +32,25 @@ export interface Market {
     category: string | null;
     volume: string;
     outcomePrices: string;
+}
+
+export interface CalibrationBin {
+    bin_start: number;
+    bin_end: number;
+    avg_predicted: number;
+    actual_frequency: number | null;
+    count: number;
+}
+
+export interface CategoryBreakdown {
+    category: string;
+    brier_score: number;
+    count: number
+}
+
+export interface CalibrationData {
+    brier_score: number | null;
+    market_count: number;
+    calibration_curve: CalibrationBin[];
+    category_breakdown: CategoryBreakdown[];
 }
