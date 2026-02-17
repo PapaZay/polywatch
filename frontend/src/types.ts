@@ -1,5 +1,3 @@
-import type { LargeNumberLike } from "crypto";
-
 export interface VolumeSpikeMeta {
     current_volume: number;
     avg_volume: number;
