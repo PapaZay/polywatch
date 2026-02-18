@@ -10,6 +10,7 @@ export default function Layout({children}: LayoutProps) {
                     <h1 className="text-xl font-bold tracking-tight">Polywatch</h1>
                     <nav className="flex gap-4 text-sm text-gray-400">
                         <a href="/" className="hover:text-white">Dashboard</a>
+                        <a href="/calibration" className="hover:text-white">Calibration</a>
                     </nav>
                 </div>
             </header>

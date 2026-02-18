@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get("/markets")
 def get_markets(limit: int = 20, db: Session = Depends(get_db)):
-    events = db.query(Market).filter(Market.status == "open").order_by(Market.updated_at.desc()).limit(limit).all()
+    events = db.query(Market).filter(Market.status == "open", Market.volume >= 10000).order_by(Market.updated_at.desc()).limit(limit).all()
     markets = []
     for market in events:
         markets.append({
