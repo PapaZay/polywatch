@@ -2,15 +2,22 @@ import {useActiveSignals} from "../hooks/useSignals.ts";
 import {useMarkets} from "../hooks/useMarkets.ts";
 import SignalList from "../components/SignalList.tsx";
 import MarketTable from "../components/MarketTable.tsx";
-import  {useState} from "react";
+import {useState, useRef} from "react";
 
 type SignalFilter = "all" | "volume_spike" | "price_momentum";
 
 export default function Dashboard(){
     const [filter, setFilter] = useState<SignalFilter>("all");
     const signals = useActiveSignals(20, filter === "all" ? undefined: filter);
-    const markets = useMarkets(20);
-
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 20;
+    const markets = useMarkets(page, PAGE_SIZE);
+    const totalPages = markets.data ? Math.ceil(markets.data.total / PAGE_SIZE) : 1; 
+    const marketsRef = useRef<HTMLElement>(null);
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        marketsRef.current?.scrollIntoView({behavior: "smooth"});
+    }
     const filters: {value: SignalFilter; label: string}[] = [
         {value: "all", label: "All"},
         {value: "volume_spike", label: "Volume Spike"},
@@ -43,15 +50,20 @@ export default function Dashboard(){
                 />
             </section>
 
-            <section>
+            <section ref={marketsRef}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Markets</h2>
                     <span className="text-xs text-gray-500">
-                        {markets.data?.length ?? 0} markets
+                        {markets.data?.total ?? 0} markets
                     </span>
                 </div>
-                <MarketTable markets={markets.data ?? []} isLoading={markets.isLoading}
-                             error={markets.error}
+                <MarketTable
+                    markets={markets.data?.markets ?? []}
+                    isLoading={markets.isLoading}
+                    error={markets.error}
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
                 />
             </section>
         </div>

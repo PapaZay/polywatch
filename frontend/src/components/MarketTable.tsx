@@ -5,9 +5,12 @@ interface MarketTableProps {
     markets: Market[];
     isLoading: boolean;
     error: Error | null;
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 }
 
-export default function MarketTable({markets, isLoading, error}: MarketTableProps){
+export default function MarketTable({markets, isLoading, error, page, totalPages, onPageChange}: MarketTableProps){
     if (isLoading){
         return <div className="text-gray-500 text-sm py-8 text-center">Loading markets...</div>;
     }
@@ -25,6 +28,7 @@ export default function MarketTable({markets, isLoading, error}: MarketTableProp
     }
 
     return (
+        <div>
         <div className="overflow-x-auto">
             <table className="w-full">
                 <thead>
@@ -43,5 +47,23 @@ export default function MarketTable({markets, isLoading, error}: MarketTableProp
                 </tbody>
             </table>
         </div>
+        {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+            <button 
+                onClick={() => onPageChange(page - 1)}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Previous
+                </button>
+                <span>Page {page} of {totalPages}</span>
+                <button
+                    onClick={() => onPageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                        Next
+                    </button>
+            </div>
+       )}
+       </div>
     );
 }

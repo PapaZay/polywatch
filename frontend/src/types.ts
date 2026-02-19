@@ -52,3 +52,8 @@ export interface CalibrationData {
     calibration_curve: CalibrationBin[];
     category_breakdown: CategoryBreakdown[];
 }
+
+export interface PaginationMarkets {
+    markets: Market[];
+    total: number;
+}

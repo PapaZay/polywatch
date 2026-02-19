@@ -1,4 +1,4 @@
-import type {Signal, Market, CalibrationData} from "../types";
+import type {Signal, CalibrationData, PaginationMarkets} from "../types";
 
 const BASE_API_URL = import.meta.env.VITE_API_URL || "/api"
 
@@ -23,8 +23,9 @@ export async function fetchSignalHistory(
     return res.json();
 }
 
-export async function fetchMarkets(limit: number = 20): Promise<Market[]> {
-    const params = new URLSearchParams({limit: String(limit)});
+export async function fetchMarkets(page: number = 1, pageSize: number = 20): Promise<PaginationMarkets> {
+    const offset = (page - 1) * pageSize;
+    const params = new URLSearchParams({limit: String(pageSize), offset: String(offset)});
     const res = await fetch(`${BASE_API_URL}/markets?${params}`);
     if (!res.ok) throw new Error(`Markets fetch failed: ${res.status}`);
     return res.json();

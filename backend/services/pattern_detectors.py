@@ -63,7 +63,8 @@ def detect_volume_spikes(db, sigma_threshold: float = 3.0):
 
 def detect_price_momentum(db, threshold: float = 0.15):
     signals = []
-    six_hours_ago = datetime.now(timezone.utc) - timedelta(hours=6)
+    #six_hours_ago = datetime.now(timezone.utc) - timedelta(hours=6)
+    starting_window = datetime.now(timezone.utc) - timedelta(hours=7)
     open_markets = db.query(Market).filter(Market.status == "open").all()
     markets = {}
     for market in open_markets:
@@ -82,16 +83,14 @@ def detect_price_momentum(db, threshold: float = 0.15):
 
     all_snapshots = db.query(MarketSnapshot).filter(
         MarketSnapshot.market_id.in_(markets.keys()),
+        MarketSnapshot.ts >= starting_window,
     ).order_by(MarketSnapshot.market_id, MarketSnapshot.ts.desc()).all()
 
     for market_id, snaps in groupby(all_snapshots, key=lambda s: s.market_id):
         market_snaps = list(snaps)
         latest = market_snaps[0]
-        earlier = None
-        for s in market_snaps:
-            if s.ts <= six_hours_ago:
-                earlier = s
-                break
+        earlier = market_snaps[-1]
+        
 
         if not latest or not earlier or not latest.price or not earlier.price:
             continue
