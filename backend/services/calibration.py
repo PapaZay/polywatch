@@ -30,6 +30,15 @@ def sync_resolved_market():
                     existing.outcome_prices = market_data.get("outcomePrices")
                     updated += 1
                     
+        unresolved = db.query(Market).filter(
+            Market.status == "closed", Market.resolution_result.is_(None), Market.outcome_prices.isnot(None), Market.outcomes.isnot(None)
+            ).all()
+        
+        for market in unresolved:
+            resolution = _derive_resolution({"outcomePrices": market.outcome_prices, "outcomes": market.outcomes,})
+            if resolution is not None:
+                market.resolution_result = resolution
+                updated += 1
         db.commit()
         print(f"Updated {updated} resolved markets")
     except Exception as e:
@@ -96,7 +105,11 @@ def compute_calibration(db: Session, category: str | None = None) -> dict:
         if not outcomes or len(outcomes) != 2:
             continue
         
-        last_snapshots = (db.query(MarketSnapshot).filter(MarketSnapshot.market_id == market.id).order_by(MarketSnapshot.ts.desc()).first())
+        last_snapshots = (db.query(MarketSnapshot).filter(
+            MarketSnapshot.market_id == market.id,
+            MarketSnapshot.price > 0.01,
+            MarketSnapshot.price < 0.99
+            ).order_by(MarketSnapshot.ts.desc()).first())
         
         if not last_snapshots or last_snapshots.price is None:
             continue

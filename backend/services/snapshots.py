@@ -6,6 +6,8 @@ from models.market import Market, MarketSnapshot
 from services.polymarket_service import PolyMarketClient
 from services.pattern_detectors import run_detections
 from services.market_sync import sync_markets
+from services.calibration import sync_resolved_market
+from services.cleanup import cleanup_old_snapshots
 import json
 
 def collect_snapshots():
@@ -68,7 +70,9 @@ def run_collector(interval_minutes: int = 5):
     while True:
         if cycles_to_sync <= 0:
             print("Syncing markets...")
+            cleanup_old_snapshots(days=5)
             sync_markets()
+            sync_resolved_market()
             cycles_to_sync = sync_interval // interval_minutes
 
         collect_snapshots()
