@@ -23,9 +23,10 @@ export async function fetchSignalHistory(
     return res.json();
 }
 
-export async function fetchMarkets(page: number = 1, pageSize: number = 20): Promise<PaginationMarkets> {
+export async function fetchMarkets(page: number = 1, pageSize: number = 20, search: string = ""): Promise<PaginationMarkets> {
     const offset = (page - 1) * pageSize;
     const params = new URLSearchParams({limit: String(pageSize), offset: String(offset)});
+    if (search) params.set("search", search);
     const res = await fetch(`${BASE_API_URL}/markets?${params}`);
     if (!res.ok) throw new Error(`Markets fetch failed: ${res.status}`);
     return res.json();

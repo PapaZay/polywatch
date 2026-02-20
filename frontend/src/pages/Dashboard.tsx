@@ -2,16 +2,27 @@ import {useActiveSignals} from "../hooks/useSignals.ts";
 import {useMarkets} from "../hooks/useMarkets.ts";
 import SignalList from "../components/SignalList.tsx";
 import MarketTable from "../components/MarketTable.tsx";
-import {useState, useRef} from "react";
+import {useState, useRef, useEffect} from "react";
 
 type SignalFilter = "all" | "volume_spike" | "price_momentum";
 
 export default function Dashboard(){
     const [filter, setFilter] = useState<SignalFilter>("all");
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const signals = useActiveSignals(20, filter === "all" ? undefined: filter);
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 20;
-    const markets = useMarkets(page, PAGE_SIZE);
+    
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1);
+        }, 300)
+        return () => clearTimeout(timer);
+    }, [search])
+
+    const markets = useMarkets(page, PAGE_SIZE, debouncedSearch);
     const totalPages = markets.data ? Math.ceil(markets.data.total / PAGE_SIZE) : 1; 
     const marketsRef = useRef<HTMLElement>(null);
     const handlePageChange = (newPage: number) => {
@@ -53,9 +64,14 @@ export default function Dashboard(){
             <section ref={marketsRef}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Markets</h2>
+                    <div className="flex items-center gap-3">
+                    <input type="text" placeholder="Search markets..." value={search} onChange={(e) => setSearch(e.target.value)}
+                    className="px-3 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded-md text-gray-200 placeholder-gray-500 focus:outline-none focus:border-gray-500 w-64"
+                    />
                     <span className="text-xs text-gray-500">
                         {markets.data?.total ?? 0} markets
                     </span>
+                    </div>
                 </div>
                 <MarketTable
                     markets={markets.data?.markets ?? []}

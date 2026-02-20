@@ -7,8 +7,11 @@ from models.market import Market
 router = APIRouter()
 
 @router.get("/markets")
-def get_markets(limit: int = 20, offset: int = 0, db: Session = Depends(get_db)):
+def get_markets(limit: int = 20, offset: int = 0, search: str | None = None, db: Session = Depends(get_db)):
     base_query = db.query(Market).filter(Market.status == "open", Market.volume >= 10000)
+    if search:
+        base_query = base_query.filter(Market.title.ilike(f"%{search}%"))
+        
     total = base_query.count()
     events = base_query.order_by(Market.updated_at.desc()).offset(offset).limit(limit).all()
     markets = []

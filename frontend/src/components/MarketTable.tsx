@@ -1,5 +1,6 @@
 import type {Market} from "../types";
 import MarketRow from "./MarketRow.tsx";
+import { useState } from "react";
 
 interface MarketTableProps {
     markets: Market[];
@@ -10,7 +11,42 @@ interface MarketTableProps {
     onPageChange: (page: number) => void;
 }
 
+type SortKey = "volume" | "yes" | "no";
+type SortDir = "asc" | "desc";
+
+const SortIcon = ({col, sortKey, sortDir}: {col: SortKey; sortKey: SortKey; sortDir: SortDir}) => {
+    if (sortKey !== col) return <span className="text-gray-600 ml-1">↕</span>
+    return <span className="text-gray-300 ml-1">{sortDir === "asc" ? "↑": "↓"}</span>
+}
+
+
 export default function MarketTable({markets, isLoading, error, page, totalPages, onPageChange}: MarketTableProps){
+    const [sortKey, setSortKey] = useState<SortKey>("volume")
+    const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortDir(d => d === "asc" ? "desc" : "asc");
+        } else {
+            setSortKey(key);
+            setSortDir("desc");
+        }
+    }
+
+    const sorted = [...markets].sort((a,b) => {
+        let aVal: number, bVal: number;
+        if (sortKey === "volume") {
+            aVal = parseFloat(a.volume) || 0;
+            bVal = parseFloat(b.volume) || 0;
+        } else {
+            const idx = sortKey === "yes" ? 0 : 1;
+            try {aVal = parseFloat(JSON.parse(a.outcomePrices)[idx]) || 0; } catch {aVal = 0;}
+            try {bVal = parseFloat(JSON.parse(b.outcomePrices)[idx]) || 0; } catch {bVal = 0;}
+        }
+        return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+    })
+
+
     if (isLoading){
         return <div className="text-gray-500 text-sm py-8 text-center">Loading markets...</div>;
     }
@@ -35,13 +71,19 @@ export default function MarketTable({markets, isLoading, error, page, totalPages
                 <tr className="border-b border-gray-700 text-left text-xs text-gray-500 uppercase tracking-wider">
                     <th className="py-3 px-4">Market</th>
                     <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4 text-right">Yes Price</th>
-                    <th className="py-3 px-4 text-right">No Price</th>
-                    <th className="py-3 px-4 text-right">Volume</th>
+                    <th className="py-3 px-4 text-right cursor-pointer hover:text-gray-300" onClick={() => handleSort("yes")}>
+                        Yes Price <SortIcon col="yes" sortKey={sortKey} sortDir={sortDir} />
+                    </th>
+                    <th className="py-3 px-4 text-right cursor-pointer hover:text-gray-300" onClick={() => handleSort("no")}>
+                        No Price <SortIcon col="no" sortKey={sortKey} sortDir={sortDir} />
+                    </th>
+                    <th className="py-3 px-4 text-right cursor-pointer hover:text-gray-300" onClick={() => handleSort("volume")}>
+                        Volume <SortIcon col="volume" sortKey={sortKey} sortDir={sortDir} />
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
-                {markets.map((market) => (
+                {sorted.map((market) => (
                     <MarketRow key={market.id} market={market} />
                 ))}
                 </tbody>
