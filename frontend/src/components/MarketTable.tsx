@@ -15,8 +15,8 @@ type SortKey = "volume" | "yes" | "no";
 type SortDir = "asc" | "desc";
 
 const SortIcon = ({col, sortKey, sortDir}: {col: SortKey; sortKey: SortKey; sortDir: SortDir}) => {
-    if (sortKey !== col) return <span className="text-gray-600 ml-1">↕</span>
-    return <span className="text-gray-300 ml-1">{sortDir === "asc" ? "↑": "↓"}</span>
+    if (sortKey !== col) return <span className="text-gray-600 ml-1">▲▼</span>
+    return <span className="text-gray-300 ml-1">{sortDir === "asc" ? "▲": "▼"}</span>
 }
 
 
