@@ -57,3 +57,10 @@ export interface PaginationMarkets {
     markets: Market[];
     total: number;
 }
+
+export interface Snapshot {
+    timestamp: string;
+    price: number;
+    volume: number;
+    liquidity: number | null;
+}
