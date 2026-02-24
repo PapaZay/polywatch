@@ -1,4 +1,4 @@
-import type {Signal, CalibrationData, PaginationMarkets} from "../types";
+import type {Signal, CalibrationData, PaginationMarkets, Snapshot} from "../types";
 
 const BASE_API_URL = import.meta.env.VITE_API_URL || "/api"
 
@@ -38,5 +38,11 @@ export async function fetchCalibration(category?: string): Promise<CalibrationDa
     const query = params.toString();
     const res = await fetch(`${BASE_API_URL}/calibration${query ? `?${query}` : ""}`);
     if (!res.ok) throw new Error(`Calibration fetch failed: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchSnapshots(marketId: string): Promise<Snapshot[]> {
+    const res = await fetch(`${BASE_API_URL}/markets/${marketId}/snapshots`);
+    if (!res.ok) throw new Error(`Snapshot fetch failed: ${res.status}`);
     return res.json();
 }

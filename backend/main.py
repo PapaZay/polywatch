@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes.markets import router as market_router
 from api.routes.signals import router as signal_router
 from api.routes.calibration import router as calibration_router
+from api.routes.snapshots import router as snapshot_router
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from config import settings
@@ -19,6 +20,7 @@ app.add_middleware(CORSMiddleware,
 app.include_router(market_router, prefix="/api")
 app.include_router(signal_router, prefix="/api")
 app.include_router(calibration_router, prefix="/api")
+app.include_router(snapshot_router, prefix="/api")
 
 
 @app.get("/")

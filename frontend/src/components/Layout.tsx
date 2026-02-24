@@ -1,3 +1,5 @@
+import Footer from "../components/Footer";
+
 interface LayoutProps {
     children: React.ReactNode;
 }
@@ -17,6 +19,7 @@ export default function Layout({children}: LayoutProps) {
             <main className="max-w-7xl mx-auto px-6 py-6">
                 {children}
             </main>
+            <Footer />
         </div>
     );
 }

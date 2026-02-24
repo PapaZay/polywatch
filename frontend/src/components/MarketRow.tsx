@@ -1,10 +1,12 @@
 import type {Market} from "../types";
+import { useNavigate } from "react-router-dom";
 
 interface MarketRowProps {
     market: Market;
 }
 
 export default function MarketRow({market}: MarketRowProps){
+    const navigate = useNavigate();
     let yesPrice: number | null = null;
     let noPrice: number | null = null;
     try {
@@ -18,7 +20,8 @@ export default function MarketRow({market}: MarketRowProps){
     const volume = parseFloat(market.volume) || 0;
 
     return (
-        <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
+        <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
+            onClick={() => navigate(`/markets/${market.id}`)}>
             <td className="py-3 px-4 text-sm max-w-md">
                 <span className="text-gray-100">{market.question}</span>
             </td>

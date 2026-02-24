@@ -23,6 +23,12 @@ export default function SignalCard({signal}: SignalCardProps) {
             ? "border-yellow-500 bg-yellow-500/10"
             : "border-blue-500 bg-blue-500/10";
 
+    const confidenceLabel = signal.confidence && signal.confidence >= 0.7
+        ? "High Confidence"
+        : signal.confidence && signal.confidence >= 0.4
+        ? "Medium Confidence"
+        : "Low Confidence";
+
     const label = isVolume ? "Volume Spike" : "Price Momentum";
 
     const timeAgo = signal.detected_at ? formatRelativeTime(signal.detected_at) : "unknown";
@@ -30,9 +36,10 @@ export default function SignalCard({signal}: SignalCardProps) {
     return (
         <div className={`rounded-lg border p-4 ${confidenceColor}`}>
             <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider">
-                    {label}
-                </span>
+                <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
+                <span className="text-xs text-gray-400">{confidenceLabel}</span>
+                </div>
                 <span className="text-xs text-gray-400">{timeAgo}</span>
             </div>
 
