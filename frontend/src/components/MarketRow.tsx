@@ -14,7 +14,6 @@ export default function MarketRow({market}: MarketRowProps){
         yesPrice = parseFloat(prices[0]);
         noPrice = prices[1] ? parseFloat(prices[1]) : null;
     } catch {
-
     }
 
     const volume = parseFloat(market.volume) || 0;
