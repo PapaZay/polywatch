@@ -6,7 +6,7 @@ interface LayoutProps {
 
 export default function Layout({children}: LayoutProps) {
     return (
-        <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+        <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col overflow-x-hidden">
             <header className="border-b border-gray-800 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <h1 className="text-xl font-bold tracking-tight">Polywatch</h1>
