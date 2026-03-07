@@ -157,6 +157,16 @@ def resolve_old_signals(db, active_market_ids, signal_type):
         Signal.status == "active",
         ~Signal.market_id.in_(active_market_ids),
         ).update({"status": "resolved"}, synchronize_session=False)
+    
+def detect_liquidity_drain(db, threshold: float = 0.20):
+    signals = []
+    starting_window = datetime.now(timezone.utc) - timedelta(hours=6)
+    open_markets = db.query(Market).filter(Market.status == "open").all()
+    markets = {}
+    for market in open_markets:
+        if not market.volume or float(market.volume) < 10000:
+            continue
+        market[market.id] = market
 
 def run_detections():
     db = SessionLocal()
